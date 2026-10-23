@@ -1,40 +1,43 @@
 import 'package:bookly/Features/home/data/models/book_model/book_model.dart';
-import 'package:bookly/Features/home/domain/entities/book_entities.dart';
+
 import 'package:bookly/core/utils/api_service.dart';
 
+import '../../domain/entities/book_entities.dart';
 
-abstract class HomeRemoteDtaSource{
-  Future<List<BookEntity>> fetchFeaturedBooks();
-  Future<List<BookEntity>> fetchNewesdBooks();
+
+abstract class HomeRemoteDataSource {
+  Future<List<BookEntity>> fetchFeaturedBooks({int pageNumber = 0});
+  Future<List<BookEntity>> fetchNewestBooks();
 }
 
-class HomeRemoteDataSourceImpl extends  HomeRemoteDtaSource  {
-  ApiService apiService;
+class HomeRemoteDataSourceImpl extends HomeRemoteDataSource {
+  final ApiService apiService;
+
   HomeRemoteDataSourceImpl(this.apiService);
+  @override
+  Future<List<BookEntity>> fetchFeaturedBooks({int pageNumber = 0}) async {
+    var data = await apiService.get(
+        endPoint:
+        'volumes?Filtering=free-ebooks&q=programming&startIndex=${pageNumber * 10}');
+    List<BookEntity> books = getBooksList(data);
+
+    return books;
+  }
 
   @override
-  Future<List<BookEntity>> fetchFeaturedBooks() async {
+  Future<List<BookEntity>> fetchNewestBooks() async {
+    var data = await apiService.get(
+        endPoint: 'volumes?Filtering=free-ebooks&Sorting=newest&q=programming');
+    List<BookEntity> books = getBooksList(data);
 
-   var data = await apiService.get(endPoint:'volumes?Filtering=free-ebooks&q=programming');
-   List<BookEntity> books = getBooksList(data);
-
-
-   return books;
-
+    return books;
   }
-  List<BookEntity> getBooksList(Map<String,dynamic> data) {
+
+  List<BookEntity> getBooksList(Map<String, dynamic> data) {
     List<BookEntity> books = [];
     for (var bookMap in data['items']) {
       books.add(BookModel.fromJson(bookMap));
     }
     return books;
   }
-
-  @override
-  Future<List<BookEntity>> fetchNewesdBooks() {
-    // TODO: implement fetchNewesdBooks
-    throw UnimplementedError();
-  }
-
-
 }
